@@ -1,0 +1,199 @@
+{
+  "info": {
+    "name": "Orders API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "orderId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Create Order",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{baseUrl}}/orders", "host": ["{{baseUrl}}"], "path": ["orders"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"customerId\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"items\": [\n    {\n      \"productId\": \"550e8400-e29b-41d4-a716-446655440001\",\n      \"name\": \"Product A\",\n      \"price\": 29.99,\n      \"quantity\": 2\n    },\n    {\n      \"productId\": \"550e8400-e29b-41d4-a716-446655440002\",\n      \"name\": \"Product B\",\n      \"price\": 10.00,\n      \"quantity\": 1\n    }\n  ]\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+              "pm.test('Status is PENDING', () => pm.expect(pm.response.json().status).to.eql('PENDING'));",
+              "pm.test('Total is correct', () => pm.expect(pm.response.json().total).to.eql(69.98));",
+              "pm.collectionVariables.set('orderId', pm.response.json().id);"
+            ]
+          }
+        }
+      ],
+      "response": [
+        {
+          "name": "201 Created",
+          "status": "Created",
+          "code": 201,
+          "body": "{\n  \"id\": \"uuid\",\n  \"customerId\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"status\": \"PENDING\",\n  \"total\": 69.98,\n  \"items\": [\n    { \"id\": \"uuid\", \"productId\": \"550e8400-e29b-41d4-a716-446655440001\", \"name\": \"Product A\", \"price\": 29.99, \"quantity\": 2 },\n    { \"id\": \"uuid\", \"productId\": \"550e8400-e29b-41d4-a716-446655440002\", \"name\": \"Product B\", \"price\": 10.00, \"quantity\": 1 }\n  ],\n  \"createdAt\": \"2024-01-01T00:00:00.000Z\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "List Orders",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/orders", "host": ["{{baseUrl}}"], "path": ["orders"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+              "pm.test('Response is array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+            ]
+          }
+        }
+      ],
+      "response": [
+        {
+          "name": "200 OK",
+          "status": "OK",
+          "code": 200,
+          "body": "[\n  {\n    \"id\": \"uuid\",\n    \"customerId\": \"550e8400-e29b-41d4-a716-446655440000\",\n    \"status\": \"PENDING\",\n    \"total\": 69.98,\n    \"items\": [],\n    \"createdAt\": \"2024-01-01T00:00:00.000Z\"\n  }\n]"
+        }
+      ]
+    },
+    {
+      "name": "Get Order By ID",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/orders/{{orderId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["orders", "{{orderId}}"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+              "pm.test('Has id', () => pm.expect(pm.response.json().id).to.be.a('string'));"
+            ]
+          }
+        }
+      ],
+      "response": [
+        {
+          "name": "200 OK",
+          "status": "OK",
+          "code": 200,
+          "body": "{\n  \"id\": \"uuid\",\n  \"customerId\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"status\": \"PENDING\",\n  \"total\": 69.98,\n  \"items\": [],\n  \"createdAt\": \"2024-01-01T00:00:00.000Z\"\n}"
+        },
+        {
+          "name": "404 Not Found",
+          "status": "Not Found",
+          "code": 404,
+          "body": "{\n  \"statusCode\": 404,\n  \"message\": \"Order not found: <id>\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "Pay Order",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{baseUrl}}/orders/{{orderId}}/pay",
+          "host": ["{{baseUrl}}"],
+          "path": ["orders", "{{orderId}}", "pay"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+              "pm.test('Order is PAID', () => pm.expect(pm.response.json().status).to.eql('PAID'));"
+            ]
+          }
+        }
+      ],
+      "response": [
+        {
+          "name": "200 OK — order paid",
+          "status": "OK",
+          "code": 200,
+          "body": "{\n  \"id\": \"uuid\",\n  \"status\": \"PAID\",\n  \"total\": 69.98,\n  \"items\": [],\n  \"createdAt\": \"2024-01-01T00:00:00.000Z\"\n}"
+        },
+        {
+          "name": "409 Conflict — order already cancelled",
+          "status": "Conflict",
+          "code": 409,
+          "body": "{\n  \"statusCode\": 409,\n  \"message\": \"Order is already cancelled\"\n}"
+        },
+        {
+          "name": "404 Not Found",
+          "status": "Not Found",
+          "code": 404,
+          "body": "{\n  \"statusCode\": 404,\n  \"message\": \"Order not found: <id>\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "Cancel Order",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{baseUrl}}/orders/{{orderId}}/cancel",
+          "host": ["{{baseUrl}}"],
+          "path": ["orders", "{{orderId}}", "cancel"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+              "pm.test('Order is CANCELLED', () => pm.expect(pm.response.json().status).to.eql('CANCELLED'));"
+            ]
+          }
+        }
+      ],
+      "response": [
+        {
+          "name": "200 OK — order cancelled",
+          "status": "OK",
+          "code": 200,
+          "body": "{\n  \"id\": \"uuid\",\n  \"status\": \"CANCELLED\",\n  \"total\": 69.98,\n  \"items\": [],\n  \"createdAt\": \"2024-01-01T00:00:00.000Z\"\n}"
+        },
+        {
+          "name": "409 Conflict — order already paid",
+          "status": "Conflict",
+          "code": 409,
+          "body": "{\n  \"statusCode\": 409,\n  \"message\": \"Order is already paid\"\n}"
+        },
+        {
+          "name": "404 Not Found",
+          "status": "Not Found",
+          "code": 404,
+          "body": "{\n  \"statusCode\": 404,\n  \"message\": \"Order not found: <id>\"\n}"
+        }
+      ]
+    }
+  ]
+}
