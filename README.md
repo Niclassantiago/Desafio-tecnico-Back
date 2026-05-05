@@ -13,7 +13,7 @@ REST API for purchase order management built with NestJS + Fastify, applying DDD
 
 ```bash
 # 1. Clone the repository and enter the directory
-git clone <repo-url>
+git clone https://github.com/Niclassantiago/Desafio-tecnico-Back.git
 cd orders-api
 
 # 2. Create the environment file
