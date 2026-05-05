@@ -1,113 +1,164 @@
 # Orders API
 
-REST API for purchase order management built with NestJS + Fastify, applying DDD, Hexagonal Architecture, and CQRS-lite.
+API REST para la gestión de órdenes de compra, desarrollada con NestJS + Fastify aplicando DDD, Arquitectura Hexagonal y CQRS-lite.
 
-**Author:** Niclas Avellaneda
-
-## Prerequisites
-
-- Node.js 20+
-- Docker and Docker Compose
-
-## Setup
-
-```bash
-# 1. Clone the repository and enter the directory
-git clone <repo-url>
-cd orders-api
-
-# 2. Create the environment file
-cp .env.example .env
-# Fill in the values in .env (see Environment Variables below)
-
-# 3. Start the PostgreSQL database
-docker-compose up -d
-
-# 4. Install dependencies
-npm install
-
-# 5. Run migrations
-npm run migration:run
-
-# 6. Start the application
-npm run start:dev
-```
-
-The API will be available at `http://localhost:3000`.
-
-## Environment Variables
-
-| Variable      | Description              | Example       |
-|---------------|--------------------------|---------------|
-| `DB_HOST`     | PostgreSQL host          | `localhost`   |
-| `DB_PORT`     | PostgreSQL port          | `5432`        |
-| `DB_USER`     | PostgreSQL username      | `orders_user` |
-| `DB_PASSWORD` | PostgreSQL password      | `orders_pass` |
-| `DB_NAME`     | PostgreSQL database name | `orders_db`   |
-| `PORT`        | HTTP port for the API    | `3000`        |
-
-## Running Migrations
-
-```bash
-# Apply all pending migrations
-npm run migration:run
-
-# Revert the last migration
-npm run migration:revert
-
-# Generate a new migration based on entity changes
-npm run migration:generate -- src/infrastructure/persistence/migrations/<MigrationName>
-```
-
-## Running Tests
-
-```bash
-# Unit tests
-npm run test
-
-# Unit tests with coverage
-npm run test:cov
-```
-
-## Endpoints
-
-| Method | Path                 | Description               |
-|--------|----------------------|---------------------------|
-| POST   | `/orders`            | Create a new order        |
-| GET    | `/orders`            | List all orders           |
-| GET    | `/orders/:id`        | Get an order by ID        |
-| POST   | `/orders/:id/pay`    | Mark an order as PAID     |
-| POST   | `/orders/:id/cancel` | Mark an order as CANCELLED|
-
-See `postman_collection.json` for full request/response examples.
+**Autor:** Niclas Avellaneda
 
 ---
 
-## Technical Decisions
+## Sobre la implementación
 
-### Hexagonal Architecture
+Se implementaron todos los requerimientos funcionales y técnicos solicitados en el desafío. Adicionalmente, se incorporaron validaciones extra no especificadas que refuerzan la consistencia del dominio:
 
-The codebase is split into four layers with strict dependency direction (inward only):
+| Validación | Solicitada | Implementada |
+|---|---|---|
+| No pagar una orden cancelada | ✅ | ✅ |
+| No cancelar una orden pagada | ✅ | ✅ |
+| No pagar una orden ya pagada | — | ✅ |
+| No cancelar una orden ya cancelada | — | ✅ |
+| Array de items vacío rechazado con 400 | — | ✅ |
+| UUID inválido en path param rechazado con 400 | — | ✅ |
 
-- **Domain** — pure TypeScript: Entities, Value Objects, Aggregate Root, Repository interface. Zero external dependencies.
-- **Application** — orchestration via Commands and Queries. Handlers load from repository, call domain methods, persist, return. No business logic lives here.
-- **Infrastructure** — TypeORM ORM entities, explicit domain↔ORM mappers, repository implementation. The mapper is the only place where conversion happens, keeping both sides independently evolvable.
-- **Interfaces** — HTTP controllers, DTOs with validation, plain response objects. Controllers delegate directly to handlers; no logic lives here.
+Estas validaciones viven en la capa de dominio (`Order.pay()`, `Order.cancel()`) y en la capa de interfaces (DTOs + pipes), respetando la separación de responsabilidades de la arquitectura.
 
-### DDD Concepts Applied
+---
 
-- **Aggregate Root**: `Order` is the only entry point for mutations. `OrderItem` is never accessed or modified from outside the aggregate.
-- **Value Objects**: `OrderId`, `OrderStatus`, and `Money` are immutable, equality-by-value types. `Money` prevents negative values and handles floating-point precision via rounding. `OrderStatus` encapsulates transition guards.
-- **Repository Pattern**: `OrderRepository` interface lives in the domain layer and uses domain types exclusively. The TypeORM implementation is wired via a DI token (`ORDER_REPOSITORY`), keeping the domain decoupled from the ORM.
+## Requisitos previos
+
+- Node.js 20+
+- Docker y Docker Compose
+
+---
+
+## Configuración e inicio
+
+```bash
+# 1. Clonar el repositorio
+git clone <url-del-repo>
+cd orders-api
+
+# 2. Crear el archivo de variables de entorno
+cp .env.example .env
+# Completar los valores en .env
+
+# 3. Levantar la base de datos PostgreSQL
+docker-compose up -d
+
+# 4. Instalar dependencias
+npm install
+
+# 5. Ejecutar las migraciones
+npm run migration:run
+
+# 6. Iniciar la aplicación
+npm run start:dev
+```
+
+La API estará disponible en `http://localhost:3000`.
+
+---
+
+## Variables de entorno
+
+| Variable      | Descripción                | Ejemplo       |
+| ------------- | -------------------------- | ------------- |
+| `DB_HOST`     | Host de PostgreSQL         | `localhost`   |
+| `DB_PORT`     | Puerto de PostgreSQL       | `5432`        |
+| `DB_USER`     | Usuario de PostgreSQL      | `orders_user` |
+| `DB_PASSWORD` | Contraseña del usuario     | `orders_pass` |
+| `DB_NAME`     | Nombre de la base de datos | `orders_db`   |
+| `PORT`        | Puerto HTTP de la API      | `3000`        |
+
+---
+
+## Migraciones
+
+```bash
+# Aplicar todas las migraciones pendientes
+npm run migration:run
+
+# Revertir la última migración
+npm run migration:revert
+
+# Generar una nueva migración a partir de cambios en entidades
+npm run migration:generate -- src/infrastructure/persistence/migrations/<NombreMigracion>
+```
+
+---
+
+## Tests
+
+```bash
+# Tests unitarios
+npm run test
+
+# Tests con cobertura
+npm run test:cov
+```
+
+---
+
+## Endpoints
+
+| Método | Ruta                 | Descripción                     |
+| ------ | -------------------- | ------------------------------- |
+| POST   | `/orders`            | Crear una nueva orden           |
+| GET    | `/orders`            | Listar todas las órdenes        |
+| GET    | `/orders/:id`        | Obtener una orden por ID        |
+| POST   | `/orders/:id/pay`    | Marcar una orden como PAID      |
+| POST   | `/orders/:id/cancel` | Marcar una orden como CANCELLED |
+
+Ver `postman_collection.json` para ejemplos completos de requests y responses.
+
+### Uso de la colección Postman
+
+1. Importar `postman_collection.json` en Postman.
+2. Verificar que la variable `{{baseUrl}}` esté configurada como `http://localhost:3000`.
+3. Ejecutar **Create Order** primero — el script de test guarda automáticamente el `id` de la orden creada en la variable `{{orderId}}`.
+4. Los requests de **Get Order By ID**, **Pay Order** y **Cancel Order** usan `{{orderId}}` automáticamente, sin necesidad de copiar el ID a mano.
+
+---
+
+## Resetear la base de datos (entorno local)
+
+```bash
+# Opción 1 — revertir y reaplicar migración
+npm run migration:revert
+npm run migration:run
+
+# Opción 2 — bajar el contenedor eliminando el volumen (más rápido)
+docker-compose down -v
+docker-compose up -d
+npm run migration:run
+```
+
+---
+
+## Decisiones técnicas
+
+### Arquitectura Hexagonal
+
+El proyecto se divide en cuatro capas con dependencias estrictamente dirigidas hacia adentro:
+
+- **Domain** — TypeScript puro: Entidades, Value Objects, Aggregate Root, interfaz de Repositorio. Sin dependencias externas.
+- **Application** — Orquestación mediante Commands y Queries. Los handlers cargan del repositorio, invocan métodos del dominio, persisten y retornan. Sin lógica de negocio.
+- **Infrastructure** — Entidades ORM de TypeORM, mappers explícitos domain↔ORM, implementación del repositorio. El mapper es el único punto de conversión entre ambos mundos.
+- **Interfaces** — Controllers HTTP, DTOs con validación, objetos de respuesta planos. Los controllers delegan directamente a los handlers, sin lógica propia.
+
+### DDD aplicado
+
+- **Aggregate Root**: `Order` es el único punto de entrada para mutaciones. `OrderItem` nunca se accede ni modifica desde afuera del agregado.
+- **Value Objects**: `OrderId`, `OrderStatus` y `Money` son tipos inmutables con igualdad por valor. `Money` rechaza valores negativos y maneja precisión decimal. `OrderStatus` encapsula las guardas de transición de estado.
+- **Repository Pattern**: la interfaz `OrderRepository` vive en el dominio y usa únicamente tipos de dominio. La implementación con TypeORM se conecta mediante un token de inyección (`ORDER_REPOSITORY`), manteniendo el dominio desacoplado del ORM.
 
 ### CQRS-lite
 
-Commands (`CreateOrder`, `PayOrder`, `CancelOrder`) and Queries (`GetOrderById`, `ListOrders`) replace a traditional Use Case pattern. Each handler has one responsibility and contains no conditional business logic — that belongs to the domain.
+Commands (`CreateOrder`, `PayOrder`, `CancelOrder`) y Queries (`GetOrderById`, `ListOrders`) reemplazan el patrón tradicional de Use Cases. Cada handler tiene una única responsabilidad y no contiene lógica condicional de negocio — esa lógica pertenece al dominio.
 
-### Why `synchronize: false`
+### Por qué `synchronize: false`
 
-TypeORM's `synchronize: true` silently alters production schemas and causes data loss. All schema changes are managed through explicit versioned migrations in `src/infrastructure/persistence/migrations/`.
+El `synchronize: true` de TypeORM altera silenciosamente el esquema en producción y puede causar pérdida de datos. Todos los cambios de esquema se gestionan a través de migraciones versionadas en `src/infrastructure/persistence/migrations/`.
 
-### Why Fastify
+### Por qué Fastify
 
-Fastify is used as the HTTP adapter because it has lower overhead and better throughput compared to Express, with full NestJS compatibility via `@nestjs/platform-fastify`.
+Fastify se usa como adaptador HTTP porque tiene menor overhead y mejor throughput que Express, con total compatibilidad con el ecosistema de NestJS a través de `@nestjs/platform-fastify`.

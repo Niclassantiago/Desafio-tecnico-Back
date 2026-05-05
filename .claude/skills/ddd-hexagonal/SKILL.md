@@ -3,7 +3,7 @@ name: ddd-hexagonal
 description: Enforces clean backend architecture for a NestJS + Fastify technical challenge using DDD, Hexagonal Architecture, and CQRS-lite. Prioritizes a pure domain model, strict layer separation, Value Objects, and correct responsibility boundaries while avoiding unnecessary complexity or overengineering. Designed to produce a clear, maintainable, and evaluation-ready solution including all delivery artifacts.
 ---
 
-You are a senior backend engineer building a technical challenge. Read every rule in this skill before writing a single line of code. Architecture and design decisions are fixed — do not deviate.
+You are a senior backend engineer. Read every rule in this skill before writing a single line of code. Architecture and design decisions are fixed — do not deviate.
 
 ---
 
@@ -99,17 +99,29 @@ npm install --save-dev @types/uuid
 ### POST /orders
 
 **Request body:**
+
 ```json
 {
   "customerId": "uuid-string",
   "items": [
-    { "productId": "uuid-string", "name": "Product A", "price": 29.99, "quantity": 2 },
-    { "productId": "uuid-string", "name": "Product B", "price": 10.00, "quantity": 1 }
+    {
+      "productId": "uuid-string",
+      "name": "Product A",
+      "price": 29.99,
+      "quantity": 2
+    },
+    {
+      "productId": "uuid-string",
+      "name": "Product B",
+      "price": 10.0,
+      "quantity": 1
+    }
   ]
 }
 ```
 
 **Response 201:**
+
 ```json
 {
   "id": "uuid",
@@ -117,7 +129,13 @@ npm install --save-dev @types/uuid
   "status": "PENDING",
   "total": 69.98,
   "items": [
-    { "id": "uuid", "productId": "uuid", "name": "Product A", "price": 29.99, "quantity": 2 }
+    {
+      "id": "uuid",
+      "productId": "uuid",
+      "name": "Product A",
+      "price": 29.99,
+      "quantity": 2
+    }
   ],
   "createdAt": "2024-01-01T00:00:00.000Z"
 }
@@ -131,6 +149,7 @@ npm install --save-dev @types/uuid
 ### GET /orders
 
 **Response 200:**
+
 ```json
 [
   { ...same shape as single order... }
@@ -157,25 +176,25 @@ npm install --save-dev @types/uuid
 
 ### Table: `orders`
 
-| Column       | Type                          | Notes              |
-|--------------|-------------------------------|--------------------|
-| id           | uuid, PK                      |                    |
-| customer_id  | uuid, NOT NULL                |                    |
-| status       | varchar(20), NOT NULL         | PENDING/PAID/CANCELLED |
-| total        | decimal(10,2), NOT NULL       |                    |
-| created_at   | timestamp, NOT NULL, default NOW() |               |
-| updated_at   | timestamp, NOT NULL, default NOW() |               |
+| Column      | Type                               | Notes                  |
+| ----------- | ---------------------------------- | ---------------------- |
+| id          | uuid, PK                           |                        |
+| customer_id | uuid, NOT NULL                     |                        |
+| status      | varchar(20), NOT NULL              | PENDING/PAID/CANCELLED |
+| total       | decimal(10,2), NOT NULL            |                        |
+| created_at  | timestamp, NOT NULL, default NOW() |                        |
+| updated_at  | timestamp, NOT NULL, default NOW() |                        |
 
 ### Table: `order_items`
 
-| Column      | Type              | Notes                       |
-|-------------|-------------------|-----------------------------|
-| id          | uuid, PK          |                             |
-| order_id    | uuid, FK → orders |                             |
-| product_id  | uuid, NOT NULL    |                             |
-| name        | varchar(255), NOT NULL |                        |
-| price       | decimal(10,2), NOT NULL |                       |
-| quantity    | int, NOT NULL     |                             |
+| Column     | Type                    | Notes |
+| ---------- | ----------------------- | ----- |
+| id         | uuid, PK                |       |
+| order_id   | uuid, FK → orders       |       |
+| product_id | uuid, NOT NULL          |       |
+| name       | varchar(255), NOT NULL  |       |
+| price      | decimal(10,2), NOT NULL |       |
+| quantity   | int, NOT NULL           |       |
 
 ---
 
@@ -193,9 +212,15 @@ npm install --save-dev @types/uuid
 **`OrderId`** — wraps UUID string, validates format on construction.
 
 **`OrderStatus`** — enum-backed VO:
+
 ```typescript
-enum OrderStatusValue { PENDING = 'PENDING', PAID = 'PAID', CANCELLED = 'CANCELLED' }
+enum OrderStatusValue {
+  PENDING = "PENDING",
+  PAID = "PAID",
+  CANCELLED = "CANCELLED",
+}
 ```
+
 Contains transition guard methods: `canPay(): boolean`, `canCancel(): boolean`.
 
 **`Money`** — wraps number, rejects negative values on construction, provides `add(other: Money): Money` for total calculation.
@@ -248,7 +273,7 @@ export interface OrderRepository {
   findAll(): Promise<Order[]>;
 }
 
-export const ORDER_REPOSITORY = Symbol('ORDER_REPOSITORY');
+export const ORDER_REPOSITORY = Symbol("ORDER_REPOSITORY");
 ```
 
 ---
@@ -266,14 +291,21 @@ export const ORDER_REPOSITORY = Symbol('ORDER_REPOSITORY');
 export class CreateOrderCommand {
   constructor(
     public readonly customerId: string,
-    public readonly items: { productId: string; name: string; price: number; quantity: number }[],
+    public readonly items: {
+      productId: string;
+      name: string;
+      price: number;
+      quantity: number;
+    }[],
   ) {}
 }
 
 // create-order.handler.ts
 @Injectable()
 export class CreateOrderHandler {
-  constructor(@Inject(ORDER_REPOSITORY) private readonly repo: OrderRepository) {}
+  constructor(
+    @Inject(ORDER_REPOSITORY) private readonly repo: OrderRepository,
+  ) {}
 
   async execute(command: CreateOrderCommand): Promise<Order> {
     const order = Order.create(command.customerId, command.items);
@@ -284,6 +316,7 @@ export class CreateOrderHandler {
 ```
 
 Handlers for `PayOrderHandler` and `CancelOrderHandler`:
+
 1. `findById` — throw `OrderNotFoundException` if null
 2. Call `order.pay()` or `order.cancel()`
 3. `save(order)`
@@ -332,13 +365,13 @@ export class TypeOrmOrderRepository implements OrderRepository {
   async findById(id: OrderId): Promise<Order | null> {
     const orm = await this.ormRepo.findOne({
       where: { id: id.value },
-      relations: ['items'],
+      relations: ["items"],
     });
     return orm ? OrderMapper.toDomain(orm) : null;
   }
 
   async findAll(): Promise<Order[]> {
-    const orms = await this.ormRepo.find({ relations: ['items'] });
+    const orms = await this.ormRepo.find({ relations: ["items"] });
     return orms.map(OrderMapper.toDomain);
   }
 }
@@ -349,14 +382,14 @@ export class TypeOrmOrderRepository implements OrderRepository {
 ```typescript
 // typeorm.config.ts — used for both app and CLI migrations
 export const typeOrmConfig: DataSourceOptions = {
-  type: 'postgres',
+  type: "postgres",
   host: process.env.DB_HOST,
-  port: parseInt(process.env.DB_PORT ?? '5432'),
+  port: parseInt(process.env.DB_PORT ?? "5432"),
   username: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   entities: [OrderOrmEntity, OrderItemOrmEntity],
-  migrations: ['dist/infrastructure/persistence/migrations/*.js'],
+  migrations: ["dist/infrastructure/persistence/migrations/*.js"],
   synchronize: false,
 };
 ```
@@ -382,7 +415,9 @@ export class OrderItemDto {
 
 export class CreateOrderDto {
   @IsUUID() customerId: string;
-  @IsArray() @ValidateNested({ each: true }) @Type(() => OrderItemDto)
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => OrderItemDto)
   items: OrderItemDto[];
 }
 ```
@@ -402,11 +437,11 @@ export class OrderResponse {
 
 Create a `DomainExceptionFilter` that catches domain exceptions and maps them:
 
-| Domain Exception              | HTTP Status | Message                       |
-|-------------------------------|-------------|-------------------------------|
-| `OrderNotFoundException`      | 404         | "Order not found"             |
-| `OrderAlreadyPaidException`   | 409         | "Order is already paid"       |
-| `OrderAlreadyCancelledException` | 409      | "Order is already cancelled"  |
+| Domain Exception                 | HTTP Status | Message                      |
+| -------------------------------- | ----------- | ---------------------------- |
+| `OrderNotFoundException`         | 404         | "Order not found"            |
+| `OrderAlreadyPaidException`      | 409         | "Order is already paid"      |
+| `OrderAlreadyCancelledException` | 409         | "Order is already cancelled" |
 
 Apply filter globally in `main.ts`.
 
@@ -478,7 +513,7 @@ async function bootstrap() {
   );
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.useGlobalFilters(new DomainExceptionFilter());
-  await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
+  await app.listen(process.env.PORT ?? 3000, "0.0.0.0");
 }
 ```
 
@@ -502,7 +537,7 @@ PORT=
 ## Docker Compose
 
 ```yaml
-version: '3.8'
+version: "3.8"
 services:
   db:
     image: postgres:15
@@ -550,6 +585,7 @@ Required test cases — no mocks needed, instantiate domain objects directly:
 File: `postman_collection.json` at project root.
 
 Must cover all 5 endpoints with:
+
 - Happy path request/response examples
 - Error cases: 404 and 409 for pay/cancel
 - Use `{{baseUrl}}` variable (default: `http://localhost:3000`)

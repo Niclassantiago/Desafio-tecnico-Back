@@ -13,3 +13,6 @@ coverage/
 # OS / IDE
 .DS_Store
 *.swp
+
+# Claude Code
+.claude/
