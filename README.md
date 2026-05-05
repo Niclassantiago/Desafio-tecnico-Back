@@ -10,14 +10,14 @@ API REST para la gestión de órdenes de compra, desarrollada con NestJS + Fasti
 
 Se implementaron todos los requerimientos funcionales y técnicos solicitados en el desafío. Adicionalmente, se incorporaron validaciones extra no especificadas que refuerzan la consistencia del dominio:
 
-| Validación | Solicitada | Implementada |
-|---|---|---|
-| No pagar una orden cancelada | ✅ | ✅ |
-| No cancelar una orden pagada | ✅ | ✅ |
-| No pagar una orden ya pagada | — | ✅ |
-| No cancelar una orden ya cancelada | — | ✅ |
-| Array de items vacío rechazado con 400 | — | ✅ |
-| UUID inválido en path param rechazado con 400 | — | ✅ |
+| Validación                                    | Solicitada | Implementada |
+| --------------------------------------------- | ---------- | ------------ |
+| No pagar una orden cancelada                  | ✅         | ✅           |
+| No cancelar una orden pagada                  | ✅         | ✅           |
+| No pagar una orden ya pagada                  | —          | ✅           |
+| No cancelar una orden ya cancelada            | —          | ✅           |
+| Array de items vacío rechazado con 400        | —          | ✅           |
+| UUID inválido en path param rechazado con 400 | —          | ✅           |
 
 Estas validaciones viven en la capa de dominio (`Order.pay()`, `Order.cancel()`) y en la capa de interfaces (DTOs + pipes), respetando la separación de responsabilidades de la arquitectura.
 
