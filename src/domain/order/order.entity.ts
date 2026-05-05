@@ -66,25 +66,20 @@ export class Order {
   }
 
   pay(): void {
-    if (this._status.isPaid()) {
-      throw new OrderAlreadyPaidException();
-    }
-    if (this._status.isCancelled()) {
-      throw new OrderAlreadyCancelledException();
-    }
+    this.assertTransitionAllowed();
     this._status = OrderStatus.paid();
     this._updatedAt = new Date();
   }
 
   cancel(): void {
-    if (this._status.isPaid()) {
-      throw new OrderAlreadyPaidException();
-    }
-    if (this._status.isCancelled()) {
-      throw new OrderAlreadyCancelledException();
-    }
+    this.assertTransitionAllowed();
     this._status = OrderStatus.cancelled();
     this._updatedAt = new Date();
+  }
+
+  private assertTransitionAllowed(): void {
+    if (this._status.isPaid()) throw new OrderAlreadyPaidException();
+    if (this._status.isCancelled()) throw new OrderAlreadyCancelledException();
   }
 
   get id(): OrderId {
